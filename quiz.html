@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style type="text/css">
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            font-family: Gotham Rounded;
+        }
+
+        :root {
+            --hue-neutral: 200;
+            --hue-wrong: 0;
+            --hue-correct: 145;
+        }
+
+        body {
+            --hue: var(--hue-neutral);
+            padding: 0;
+            margin: 0;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-color: hsl(var(--hue), 100%, 20%);
+        }
+
+        body.correct {
+            --hue: var(--hue-correct);
+        }
+
+        body.wrong {
+            --hue: var(--hue-wrong);
+        }
+
+        .container {
+            width: 800px;
+            max-width: 80%;
+            background-color: white;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px 2px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(1, auto);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            --hue: var(--hue-neutral);
+            border: 1px solid hsl(var(--hue), 100%, 30%);
+            background-color: hsl(var(--hue), 100%, 50%);
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: white;
+            outline: none;
+        }
+
+        .btn:hover {
+            border-color: black;
+        }
+
+        .btn.correct {
+            --hue: var(--hue-correct);
+            color: black;
+        }
+
+        .btn.wrong {
+            --hue: var(--hue-wrong);
+        }
+
+        .start-btn,
+        .next-btn,
+        .result-btn {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 40px;
+            padding-right: 40px;
+        }
+
+        .hide {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="question-container" class="hide">
+            <div id="question">Question</div>
+            <div id="answer-buttons" class="btn-grid">
+                <button class="btn">Answer 1</button>
+                <button class="btn">Answer 2</button>
+                <button class="btn">Answer 3</button>
+                <button class="btn">Answer 4</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="start-btn" class="start-btn btn" onclick="MaxInterval(), clearArray()">Começar</button>
+            <button id="next-btn" class="next-btn btn hide">Próxima</button>
+            <button id="result-btn" class="result-btn btn" onclick="showResult(), hideeve()">Resultados</button>
+        </div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('start-btn')
+        const nextButton = document.getElementById('next-btn')
+        const questionContainerElement = document.getElementById('question-container')
+        const questionElement = document.getElementById('question')
+        const answerButtonsElement = document.getElementById('answer-buttons')
+
+        var correctAnswer = []
+
+        let shuffledQuestions, currentQuestionIndex
+
+
+
+        startButton.addEventListener('click', MaxInterval)
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++
+            setNextQuestion()
+        })
+
+        /* function MaxInterval() {
+            startButton.classList.add('hide')
+            shuffledQuestions = questions.sort(() => Math.random() - .5)
+            currentQuestionIndex = 0
+            questionContainerElement.classList.remove('hide')
+            setNextQuestion()
+            correctAnswer = []
+        } */
+
+        currentQuestionIndex = 0
+        var startTime = new Date().getTime();
+
+        function clearArray(){
+            correctAnswer = []
+        }
+
+
+        function MaxInterval() {
+            var interval = setInterval(() => {
+                startButton.classList.add('hide')
+                shuffledQuestions = questions.sort(() => Math.random() - .5)
+                currentQuestionIndex = 0
+                questionContainerElement.classList.remove('hide')
+                setNextQuestion()
+                if (new Date().getTime() - startTime > 50000) {
+                    clearInterval(interval);
+                    return;
+                }
+            }, 10000);
+            currentQuestionIndex++
+        }
+
+
+        function setNextQuestion() {
+            resetState()
+            showQuestion(shuffledQuestions[currentQuestionIndex])
+        }
+
+        function showQuestion(questions) {
+            questionElement.innerText = questions.question
+            questions.answers.forEach(answer => {
+                const button = document.createElement('button')
+                button.innerText = answer.text
+                button.classList.add('btn')
+                if (answer.correct) {
+                    button.dataset.correct = answer.correct
+                }
+                button.addEventListener('click', selectAnswer)
+                answerButtonsElement.appendChild(button)
+            })
+        }
+
+        function resetState() {
+            clearStatusClass(document.body)
+            nextButton.classList.add('hide')
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild)
+            }
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.target
+            const correct = selectedButton.dataset.correct
+            setStatusClass(document.body, correct)
+            Array.from(answerButtonsElement.children).forEach(button => {
+                setStatusClass(button, button.dataset.correct)
+            })
+            if (shuffledQuestions.length > currentQuestionIndex + 1) {
+                nextButton.classList.remove('hide')
+            } else {
+                startButton.innerText = 'Restart'
+                startButton.classList.remove('hide')
+            }
+        }
+
+        function setStatusClass(element, correct) {
+            clearStatusClass(element)
+            if (correct) {
+                element.classList.add('correct')
+                correctAnswer.push("acerto")
+            } else {
+                element.classList.add('wrong')
+            }
+        }
+
+        function clearStatusClass(element) {
+            element.classList.remove('correct')
+            element.classList.remove('wrong')
+        }
+
+        function showResult() {
+            if (correctAnswer.length == 0) {
+                document.getElementById("answer-buttons").innerHTML = `Você acertou 0 questões!`
+            } else if (correctAnswer.length == 2) {
+                document.getElementById("answer-buttons").innerHTML = `Você acertou 1 questão!`
+            } else if (correctAnswer.length == 4) {
+                document.getElementById("answer-buttons").innerHTML = `Você acertou 2 questões!`
+            } else if (correctAnswer.length == 6) {
+                document.getElementById("answer-buttons").innerHTML = `Você acertou 3 questões!`
+            } else if (correctAnswer.length == 8) {
+                document.getElementById("answer-buttons").innerHTML = `Você acertou 4 questões!`
+            }
+        }
+
+        function hideeve() {
+            document.getElementById("question").innerHTML = ""
+        }
+
+        const questions = [{
+                question: 'Quanto é 2 + 2?',
+                answers: [{
+                        text: '4',
+                        correct: true
+                    },
+                    {
+                        text: '22',
+                        correct: false
+                    },
+                    {
+                        text: '2',
+                        correct: false
+                    }
+                ]
+            },
+            {
+                question: 'Qual a Moda entre [100, 200, 100, 50]?',
+                answers: [{
+                        text: '100',
+                        correct: true
+                    },
+                    {
+                        text: '200',
+                        correct: false
+                    },
+                    {
+                        text: '50',
+                        correct: false
+                    }
+                ]
+            },
+            {
+                question: 'Qual o valor Aproximado de π',
+                answers: [{
+                        text: '3,14',
+                        correct: true
+                    },
+                    {
+                        text: '0,78',
+                        correct: false
+                    },
+                    {
+                        text: '∞',
+                        correct: false
+                    }
+                ]
+            },
+            {
+                question: 'Qual a fórmula de Bhaskara?',
+                answers: [{
+                        text: 'x = (– b ± √∆)/2a',
+                        correct: true
+                    },
+                    {
+                        text: 'Δ = b2 – 4ac',
+                        correct: false
+                    },
+                    {
+                        text: 'xa² + ba + c = d',
+                        correct: false
+                    }
+                ]
+            }
+        ]
+    </script>
+</body>
+
+</html>
